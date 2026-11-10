@@ -53,6 +53,8 @@ function(stm32g431_apply_board TGT OPT)
         ${BOARD_DIR}/startup_stm32g431xx.s
         ${BOARD_DIR}/system_stm32g4xx.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal.c
+        ${STM32_G4_HAL_SRC}/stm32g4xx_hal_adc.c
+        ${STM32_G4_HAL_SRC}/stm32g4xx_hal_adc_ex.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_cortex.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_dma.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_flash.c

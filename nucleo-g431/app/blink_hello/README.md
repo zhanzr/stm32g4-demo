@@ -1,13 +1,17 @@
 # blink_hello - Nucleo-G431RB (STM32G431RBT6)
 
-First project on the **nucleo-g431** board: blinks the onboard user LED and
-prints over the ST-Link virtual COM port.
+First project on the **nucleo-g431** board: blinks the onboard user LED,
+checks the USER button, and samples the ADC1 internal channels, printing
+over the ST-Link virtual COM port.
 
 ## What it does
 
 - **LD2 (PA5, green)** toggles every 250 ms (high-active)
 - Holding the **USER button B1 (PC13)** lights LD2 (bring-up check)
-- Banner at boot + a heartbeat line every ~1 s over the console
+- Every ~1 s samples the ADC1 internal channels and prints:
+  chip temperature (factory-calibration interpolated), VREFINT-derived
+  supply voltage and VBAT
+- Banner with SYSCLK at boot
 
 ## Board facts
 
@@ -28,4 +32,6 @@ ninja flash            # probe-rs download + reset over ST-Link SWD
 
 ## Files
 
-- `src/main.c` - LED blink + button check + console heartbeat
+- `src/main.c` - LED blink + button check + ADC report loop
+- `src/adc_internal.c/.h` - ADC1 internal-channel sampler (ch16 temp,
+  ch18 VREFINT, ch17 VBAT/3; factory-calibrated at VDDA = 3.0 V)

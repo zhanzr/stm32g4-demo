@@ -15,6 +15,7 @@ extern "C" {
 
 /* ########################## Module Selection ############################## */
 #define HAL_MODULE_ENABLED
+#define HAL_ADC_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_FLASH_MODULE_ENABLED
@@ -71,6 +72,11 @@ void assert_failed(uint8_t *file, uint32_t line);
 #if defined(HAL_DMA_MODULE_ENABLED)
   #include "stm32g4xx_hal_dma.h"
 #endif /* HAL_DMA_MODULE_ENABLED */
+
+#if defined(HAL_ADC_MODULE_ENABLED)
+  #include "stm32g4xx_hal_adc.h"
+  #include "stm32g4xx_hal_adc_ex.h"
+#endif /* HAL_ADC_MODULE_ENABLED */
 
 #if defined(HAL_CORTEX_MODULE_ENABLED)
   #include "stm32g4xx_hal_cortex.h"

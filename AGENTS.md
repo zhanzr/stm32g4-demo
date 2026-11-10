@@ -43,6 +43,9 @@ do not hand-edit them.
 - Flash uses **probe-rs** by default (auto-detects the probe); OpenOCD is the
   alternative. Pin a specific probe with `-DDEBUG_PROBE=<selector>` at configure
   time (the nucleo-g431 board CMake already pins its own ST-LINK serial).
+- Console capture: `powershell -File capture_console.ps1 [-Seconds N] [-Out <file>]`
+  opens the ST-LINK VCP, resets the board and records the UART output
+  (benchmarks re-run in a loop; take the last complete result line).
 
 ## Project structure conventions
 

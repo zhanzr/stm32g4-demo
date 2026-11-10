@@ -22,6 +22,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_executable(${PROJECT_NAME}.elf
     src/main.c
+    src/adc_internal.c
 )
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/stm32g431_board.cmake)
