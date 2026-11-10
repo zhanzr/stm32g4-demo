@@ -13,6 +13,9 @@ Only what the projects in this repo compile against is included:
 | ------------------------------------------------- | ------------------------------- |
 | `CMSIS/Include`                                   | CMSIS 5 core headers (M0..M33)  |
 | `CMSIS/Device/ST/STM32G4xx/Include`               | STM32G4 device headers          |
+| `CMSIS/DSP/Include`                               | CMSIS-DSP headers (`arm_math.h` …) |
+| `CMSIS/DSP/Source/FastMathFunctions/arm_sin_f32.c`| CMSIS-DSP fast sine             |
+| `CMSIS/DSP/Source/CommonTables/arm_common_tables.c` | CMSIS-DSP tables (`sinTable_f32` …) |
 | `STM32G4xx_HAL_Driver/Inc` (+ `Inc/Legacy`)       | STM32G4 HAL headers             |
 | `STM32G4xx_HAL_Driver/Src` (all HAL modules)      | STM32G4 HAL sources             |
 

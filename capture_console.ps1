@@ -1,6 +1,6 @@
 # Capture console output from a board's ST-LINK virtual COM port (VCP):
 # opens the serial port, resets the target via probe-rs, prints N seconds of
-# serial output (and saves it to a file next to the caller's output path).
+# serial output (and saves it to the file given with -Out).
 #
 # Usage:
 #   powershell -File capture_console.ps1 [-COM COMn] [-Seconds 15] [-Out <file>]
@@ -30,20 +30,25 @@ if (-not $COM) {
 $tmpfile = [System.IO.Path]::GetTempFileName()
 Remove-Item $tmpfile -ErrorAction SilentlyContinue
 
+# Short read timeouts with a chunked raw-read loop: the job stays responsive
+# (Stop-Job returns quickly) and tolerates arbitrarily long silences.
 $job = Start-Job -ArgumentList $tmpfile, $COM {
     param($tf, $com)
     $p = [System.IO.Ports.SerialPort]::new($com, 115200, [System.IO.Ports.Parity]::None, 8, [System.IO.Ports.StopBits]::One)
-    # Long timeout: the gap between the boot banner and a benchmark's results
-    # can be tens of seconds; do not let ReadLine kill the capture job.
-    $p.ReadTimeout = 120000
+    $p.ReadTimeout = 300
     $p.Open()
     $p.DiscardInBuffer()
     $sw = [System.IO.StreamWriter]::new($tf, $false)
+    $buf = New-Object byte[] 512
     try {
         while ($true) {
-            $line = $p.ReadLine()
-            $sw.WriteLine($line)
-            $sw.Flush()
+            try {
+                $n = $p.BaseStream.Read($buf, 0, $buf.Length)
+                if ($n -gt 0) {
+                    $sw.Write([System.Text.Encoding]::ASCII.GetString($buf, 0, $n))
+                    $sw.Flush()
+                }
+            } catch { }   # read timeout -> keep polling
         }
     } catch { }
     $sw.Close()

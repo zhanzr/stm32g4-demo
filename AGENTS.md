@@ -74,6 +74,14 @@ belongs there and is pulled in by the board-apply CMake function.
 - HAL vendor tree is shared across boards in root `drivers/`; `STM32_G4_HAL_ROOT`
   defaults to `../../drivers`. To use the full STM32Cube_FW_G4 package instead,
   pass `-DSTM32_G4_HAL_ROOT` at configure time.
+- The board cmake links `c`/`m` (libc/libm) via `target_link_libraries`, i.e.
+  AFTER the objects. Do not put `-lc`/`-lm` into LINK_FLAGS: link flags precede
+  the objects, and archive members are only extracted for still-undefined
+  symbols at the point the archive is scanned (this broke `sinf`/`sin` once).
+- Whole-image soft-float ABI builds are supported: set `STM32_FLOAT_ABI=soft`
+  (regular variable) before including the board cmake. Soft and hard ABI
+  objects cannot be mixed in one binary (GNU ld rejects the EABI-attribute
+  merge) - see `nucleo-g431/app/cordic_test` (hard + soft sibling builds).
 - Compile definitions set by the board layer: `STM32G431xx` (or the G4 part)
   and `USE_HAL_DRIVER`.
 - `-ffunction-sections -fdata-sections` + `--gc-sections` are on by default.

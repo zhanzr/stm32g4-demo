@@ -30,6 +30,7 @@ streamed out **USART2 (PA2/PA3)** at 115200 baud - the ST-LINK
 | `app/blink_hello` | LD2 (PA5) blink + B1 button check + ADC1 internal-channel report (temp/VREFINT/VBAT) |
 | `app/dhry_170m`   | Dhrystone 2.1 benchmark @ 170 MHz               |
 | `app/coremark_170m` | CoreMark 1.0.1 benchmark @ 170 MHz            |
+| `app/cordic_test` | sine benchmark: HW CORDIC vs CMSIS DSP vs FPU sinf vs soft-float vs double (two builds: hard + soft ABI) |
 
 ## Notes
 

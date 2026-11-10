@@ -30,6 +30,15 @@ set(STM32_G4_HAL_SRC ${STM32_G4_HAL_ROOT}/STM32G4xx_HAL_Driver/Src)
 set(STM32_G4_CMSIS_DEV ${STM32_G4_HAL_ROOT}/CMSIS/Device/ST/STM32G4xx/Include)
 set(STM32_G4_CMSIS_CORE ${STM32_G4_HAL_ROOT}/CMSIS/Include)
 
+# Floating-point ABI for the whole image: "hard" (FPU arithmetic + VFP
+# argument registers; the default) or "soft" (everything on the software-
+# float ABI, e.g. cordic_test's soft-sinf build). Soft and hard objects
+# cannot be mixed in one binary (GNU ld rejects the EABI-attribute merge),
+# so a soft build must set this before including this file.
+if(NOT STM32_FLOAT_ABI)
+    set(STM32_FLOAT_ABI hard)
+endif()
+
 function(stm32g431_apply_board TGT OPT)
     separate_arguments(OPT_LIST NATIVE_COMMAND "${OPT}")
 
@@ -56,6 +65,7 @@ function(stm32g431_apply_board TGT OPT)
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_adc.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_adc_ex.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_cortex.c
+        ${STM32_G4_HAL_SRC}/stm32g4xx_hal_cordic.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_dma.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_flash.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_flash_ex.c
@@ -87,7 +97,7 @@ function(stm32g431_apply_board TGT OPT)
     target_compile_definitions(${TGT} PRIVATE STM32G431xx USE_HAL_DRIVER)
 
     target_compile_options(${TGT} PRIVATE
-        -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16
+        -mcpu=cortex-m4 -mthumb -mfloat-abi=${STM32_FLOAT_ABI} -mfpu=fpv4-sp-d16
         ${OPT_LIST} -g
         -ffunction-sections -fdata-sections ${_WARN_FLAGS}
     )
@@ -105,16 +115,21 @@ function(stm32g431_apply_board TGT OPT)
         set(_LDFLAGS "${_LDFLAGS} ${_STARM_LIBDIR}/libclang_rt.builtins.a -lc -lm")
         set(_LDFLAGS "${_LDFLAGS} -Xlinker --end-group")
     else()
-        set(_LDFLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 ${OPT}")
+        set(_LDFLAGS "-mcpu=cortex-m4 -mthumb -mfloat-abi=${STM32_FLOAT_ABI} -mfpu=fpv4-sp-d16 ${OPT}")
         set(_LDFLAGS "${_LDFLAGS} -Wl,--gc-sections -nostartfiles")
         set(_LDFLAGS "${_LDFLAGS} -Wl,-Map=${PROJECT_NAME}.map")
         set(_LDFLAGS "${_LDFLAGS} -T ${BOARD_LINKER_SCRIPT}")
-        set(_LDFLAGS "${_LDFLAGS} -lc -lm")
     endif()
 
     set_target_properties(${TGT} PROPERTIES
         LINK_FLAGS "${_LDFLAGS}"
     )
+
+    # libc/libm must come AFTER the objects (CMake places target libraries
+    # there): archive members are only extracted for symbols still undefined
+    # at the point the archive is scanned, so -lc/-lm in LINK_FLAGS - which
+    # precede the objects - can never satisfy object references (e.g. sinf).
+    target_link_libraries(${TGT} PRIVATE c m)
 
     # newlib/libgcc's thumb/v7e-m+fp/hard multilib objects are built with
     # -fshort-enums and lack .note.GNU-stack, so a GNU ld link spews ~60
