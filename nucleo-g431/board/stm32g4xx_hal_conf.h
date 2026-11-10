@@ -20,6 +20,7 @@ extern "C" {
 #define HAL_CORDIC_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
 #define HAL_FLASH_MODULE_ENABLED
+#define HAL_FMAC_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
@@ -90,6 +91,10 @@ void assert_failed(uint8_t *file, uint32_t line);
 #if defined(HAL_FLASH_MODULE_ENABLED)
   #include "stm32g4xx_hal_flash.h"
 #endif /* HAL_FLASH_MODULE_ENABLED */
+
+#if defined(HAL_FMAC_MODULE_ENABLED)
+  #include "stm32g4xx_hal_fmac.h"
+#endif /* HAL_FMAC_MODULE_ENABLED */
 
 #if defined(HAL_PWR_MODULE_ENABLED)
   #include "stm32g4xx_hal_pwr.h"
