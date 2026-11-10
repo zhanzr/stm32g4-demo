@@ -16,10 +16,14 @@ captured `dhrystone_log.txt` (git-ignored) for a full run.
 
 | Toolchain | Flags                                      | Dhrystones/s | DMIPS  | DMIPS/MHz |
 | --------- | ------------------------------------------ | ------------ | ------ | --------- |
-| GCC 15.3.1 | `-Ofast -ffp-contract=fast -funroll-loops` | **358,551** | 204.0 | **1.200** |
+| GCC 15.3.1 | `-Ofast -ffp-contract=fast -funroll-loops` | 358,551 | 204.0 | 1.200 |
+| ARMCLANG (Keil AC6, Clang 20) | `-Ofast -ffp-contract=fast -funroll-loops` | **408,163** | 232.4 | **1.367** |
+| ST Arm clang (starm-clang, Clang 21.1.1) | `-Ofast -ffp-contract=fast -funroll-loops` | 389,864 | 221.9 | 1.305 |
 
 All runs print correct final values (Int_Glob=5, Arr_2_Glob[8][7] =
-runs+10, …), so the score is genuine.
+runs+10, …), so every score is genuine. Captured logs (git-ignored):
+`dhrystone_log.txt` (gcc), `dhrystone_log_armclang.txt`,
+`dhrystone_log_starm.txt`.
 
 > ⚠ **Do not use LTO for Dhrystone.** GCC `-flto` sees the whole program and
 > hoists the loop-invariant work out of the timed loop, inflating the score
@@ -34,7 +38,10 @@ runs+10, …), so the score is genuine.
   F4), only instruction prefetch + instruction cache, so flash-fetch bound
   code scales sub-linearly with the 170 MHz core clock (F413 reached 1.34
   DMIPS/MHz @ 100 MHz on the same core with ART).
-- Run time: 2M runs in ~5.6 s per pass, then a 10 s pause before re-running.
+- Run time: 2M runs in ~5.6 s per pass (GCC; ~4.9 s armclang), then a 10 s
+  pause before re-running.
+- Keil AC6 wins on this benchmark (+14% over GCC); ST's starm-clang (Clang
+  21.1.1 + LLD) builds and runs fine here too.
 
 ## Build / flash
 

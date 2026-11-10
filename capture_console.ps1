@@ -33,7 +33,9 @@ Remove-Item $tmpfile -ErrorAction SilentlyContinue
 $job = Start-Job -ArgumentList $tmpfile, $COM {
     param($tf, $com)
     $p = [System.IO.Ports.SerialPort]::new($com, 115200, [System.IO.Ports.Parity]::None, 8, [System.IO.Ports.StopBits]::One)
-    $p.ReadTimeout = 6000
+    # Long timeout: the gap between the boot banner and a benchmark's results
+    # can be tens of seconds; do not let ReadLine kill the capture job.
+    $p.ReadTimeout = 120000
     $p.Open()
     $p.DiscardInBuffer()
     $sw = [System.IO.StreamWriter]::new($tf, $false)
@@ -50,7 +52,7 @@ $job = Start-Job -ArgumentList $tmpfile, $COM {
 
 Start-Sleep -Milliseconds 1000
 # Reset the target so the capture starts from the boot banner.
-probe-rs reset --probe $probe 2>$null | Out-Null
+probe-rs reset --probe $probe --chip STM32G431RB
 Start-Sleep -Seconds $Seconds
 Stop-Job $job -ErrorAction SilentlyContinue
 Remove-Job $job -Force -ErrorAction SilentlyContinue

@@ -20,16 +20,28 @@ VCP buffer). See the captured `coremark_log.txt` (git-ignored) for a full run.
 | Toolchain | Flags                                        | iterations/s | CoreMark/MHz | Time (s) |
 | --------- | -------------------------------------------- | ------------ | ------------ | -------- |
 | GCC 15.3.1 | `-Ofast -ffp-contract=fast -funroll-all-loops` | **444.504** | **2.615** | 22.50 |
+| GCC 15.3.1 + LTO | same + `-flto` | 423.855 | 2.493 | 23.59 |
+| ARMCLANG (Keil AC6, Clang 20) | `-Omax -fno-lto` | **519.130** | **3.054** | 19.26 |
+| ST Arm clang (starm-clang, Clang 21.1.1) | `-Ofast -ffp-contract=fast -funroll-all-loops` | 395.429 | 2.326 | 25.29 |
 
-- `crcfinal 0x988c` - the same valid CRC as the nucleo-f413 (STM32F413ZHT6)
-  runs, so the operation is validated and the score is genuine.
-- 444.5 iterations/s = **2.615 CoreMark/MHz**, matching ST's published
-  **2.62 CoreMark/MHz** for STM32G4 @ 170 MHz (≈445 iterations/s).
+- `crcfinal 0x988c` on every run - the same valid CRC as the nucleo-f413
+  (STM32F413ZHT6) runs, so the operation is validated and the scores are
+  genuine.
+- GCC 444.5 iterations/s = **2.615 CoreMark/MHz**, matching ST's published
+  **2.62 CoreMark/MHz** for STM32G4 @ 170 MHz (≈445 iterations/s). Keil AC6
+  at `-Omax` exceeds it (519 it/s), like it did on the F413.
 - The run is fully deterministic: repeat runs report the identical
-  22,497 ms total-ticks count.
-- Note CoreMark's per-run CRC forces the work to execute, so **LTO does not
-  inflate it** the way it cheats Dhrystone — see
-  `dhry_170m/README.md`.
+  22,497 ms total-ticks count (GCC).
+- On this board GCC `-flto` **loses** ~5% (423.9 vs 444.5; on the F413 it
+  gained ~1%) - no reason to use it. Note CoreMark's per-run CRC forces the
+  work to execute, so LTO neither inflates nor cheats it (unlike Dhrystone,
+  see `dhry_170m/README.md`).
+- The ee_printf flag string printed in the results line is the port's static
+  `FLAGS_STR` (the default `-Ofast -ffp-contract=fast -funroll-all-loops`);
+  for the armclang `-Omax` row the real flags are those in the table above.
+- Captured logs (git-ignored): `coremark_log.txt` (gcc),
+  `coremark_log_armclang.txt`, `coremark_log_starm.txt`,
+  `coremark_log_gcc_lto.txt`.
 
 ## Build / flash
 
