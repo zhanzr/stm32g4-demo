@@ -1,0 +1,30 @@
+# Build artifacts
+build/
+_build/
+build-*/
+
+# Binaries / objects
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.obj
+*.a
+*.lst
+
+# Logs
+*.log
+*.mdb
+*.ini
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# WiFi credentials (never commit)
+**/wifi_config.h
+*_log*.txt
