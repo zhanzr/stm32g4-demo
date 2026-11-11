@@ -33,6 +33,7 @@ streamed out **USART2 (PA2/PA3)** at 115200 baud - the ST-LINK
 | `app/cordic_test` | sine benchmark: HW CORDIC vs CMSIS DSP vs FPU sinf vs soft-float vs double (two builds: hard + soft ABI) |
 | `app/fmac_test`  | FIR filter benchmark: HW FMAC vs CPU q1.15 vs FPU float vs soft-float vs double (two builds: hard + soft ABI) |
 | `app/sx395hvga40p-01-v01` | ILI9488 3.5" 320x480 SPI LCD demo (soft bit-bang + HW SPI2 with DMA) - panel not connected yet |
+| `app/ips395-st7796-captouch` | ST7796S 4.0" 320x480 IPS LCD + FT6336U capacitive touch (I2C1) demo |
 
 ## Notes
 

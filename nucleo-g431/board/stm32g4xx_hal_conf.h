@@ -22,6 +22,7 @@ extern "C" {
 #define HAL_FLASH_MODULE_ENABLED
 #define HAL_FMAC_MODULE_ENABLED
 #define HAL_GPIO_MODULE_ENABLED
+#define HAL_I2C_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
 #define HAL_SPI_MODULE_ENABLED
@@ -68,13 +69,17 @@ void assert_failed(uint8_t *file, uint32_t line);
   #include "stm32g4xx_hal_rcc.h"
 #endif /* HAL_RCC_MODULE_ENABLED */
 
+#if defined(HAL_DMA_MODULE_ENABLED)
+  #include "stm32g4xx_hal_dma.h"
+#endif /* HAL_DMA_MODULE_ENABLED */
+
 #if defined(HAL_GPIO_MODULE_ENABLED)
   #include "stm32g4xx_hal_gpio.h"
 #endif /* HAL_GPIO_MODULE_ENABLED */
 
-#if defined(HAL_DMA_MODULE_ENABLED)
-  #include "stm32g4xx_hal_dma.h"
-#endif /* HAL_DMA_MODULE_ENABLED */
+#if defined(HAL_I2C_MODULE_ENABLED)
+  #include "stm32g4xx_hal_i2c.h"
+#endif /* HAL_I2C_MODULE_ENABLED */
 
 #if defined(HAL_ADC_MODULE_ENABLED)
   #include "stm32g4xx_hal_adc.h"
