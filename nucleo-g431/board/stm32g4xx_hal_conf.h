@@ -24,6 +24,7 @@ extern "C" {
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_PWR_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
+#define HAL_SPI_MODULE_ENABLED
 #define HAL_UART_MODULE_ENABLED
 
 /* ##################### Register Callbacks selection ####################### */
@@ -99,6 +100,10 @@ void assert_failed(uint8_t *file, uint32_t line);
 #if defined(HAL_PWR_MODULE_ENABLED)
   #include "stm32g4xx_hal_pwr.h"
 #endif /* HAL_PWR_MODULE_ENABLED */
+
+#if defined(HAL_SPI_MODULE_ENABLED)
+  #include "stm32g4xx_hal_spi.h"
+#endif /* HAL_SPI_MODULE_ENABLED */
 
 #if defined(HAL_UART_MODULE_ENABLED)
   #include "stm32g4xx_hal_uart.h"

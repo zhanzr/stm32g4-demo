@@ -75,6 +75,7 @@ function(stm32g431_apply_board TGT OPT)
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_pwr_ex.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_rcc.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_rcc_ex.c
+        ${STM32_G4_HAL_SRC}/stm32g4xx_hal_spi.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_uart.c
         ${STM32_G4_HAL_SRC}/stm32g4xx_hal_uart_ex.c
     )

@@ -1,0 +1,43 @@
+# ILI9488 320x480 LCD demo ("sx395hvga40p-01-v01") for the "nucleo-g431"
+# board (STM32G431RBT6 @ 170 MHz). Drives the SX395HVGA40P-01-V01 3.5-inch
+# ILI9488 module with a 4-wire SPI:
+#   SCL = PB13, SDA = PB15, DC = PB2, RST = PB1, CS = PB14, BL = PB11
+#   (TIM2_CH4 PWM).
+# ILI9488 init (vendor-verbatim): MADCTL 0x08, 18bpp COLMOD (serial mode),
+# power/VCOM/gamma registers; 320x480 windows at COL_Pre=ROW_Pre=0.
+# Two drive methods like the nucleo-f413 twin: soft bit-bang and HW SPI2
+# (DMA raster bursts via DMA1 Ch1 / DMAMUX request 13 = SPI2_TX).
+#
+# Pico-style workflow:
+#   bash build.sh          # == mkdir build && cd build && cmake -G Ninja .. && ninja
+#   ninja flash            # programs the board (probe-rs, ST-Link SWD)
+
+cmake_minimum_required(VERSION 3.13)
+
+if(NOT CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/arm-none-eabi-toolchain.cmake")
+endif()
+
+project(sx395hvga40p-01-v01 C ASM)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+add_executable(${PROJECT_NAME}.elf
+    src/main.c
+    src/interface.c
+    src/lcd.c
+    src/lcd/lcd_fonts.c
+    src/lcd/lcd_font_1608.c
+    src/backlight.c
+)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/stm32g431_board.cmake)
+stm32g431_apply_board(${PROJECT_NAME}.elf "-O1")
+
+target_include_directories(${PROJECT_NAME}.elf PRIVATE
+    src
+    src/blockwrite
+)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/flash-targets.cmake)
