@@ -4,9 +4,9 @@ Port of the **nucleo-f413** twin project: drives the **SX395HVGA40P-01-V01**
 3.5" **320x480** module (**ILI9488** controller) on the **nucleo-g431**
 board (STM32G431RBT6 @ 170 MHz) over a 4-wire SPI bus, with two
 interchangeable drive methods compared back to back in one demo loop:
-bit-banged GPIO ("soft SPI") and the **SPI2** peripheral with DMA raster
-bursts. **The module is not connected yet** - the port is build-verified;
-visual verification follows once wired.
+bit-banged GPIO ("soft SPI", ~700 ms per full-screen fill) and the
+**SPI2** peripheral with DMA raster bursts (**89 ms per fill** = wire
+speed at 42.5 MHz). **Verified on the connected panel.**
 
 ## Hardware connection plan - feasibility (investigated)
 
@@ -43,6 +43,30 @@ Bus-level facts verified for this chip:
   32 KB SRAM with ~15 KB headroom.
 - Pin conflicts: none. LD2 (PA5) stays free and is used for the demo's
   LED test; PB13/14/15 and PB1/2/11 have no other users on this board.
+
+## DMA port gotchas (found on hardware, worth remembering)
+
+- **DMAMUX channel numbering is 0-based, DMA channel numbering is
+  1-based**: `DMA1_Channel1` is routed by **`DMAMUX1_Channel0`**
+  (`DMAMUX1_Channel1` feeds `DMA1_Channel2`!). Pairing mux ch1 with DMA
+  ch1 silently routes the request to a different channel - the burst
+  then never completes.
+- **The G4 DMA `CCR.EN` stays set after the transfer completes**
+  (unlike F4 streams where EN auto-clears at TC). Completion must be
+  polled via the channel TC flag (`DMA1->ISR & DMA_ISR_TCIF1`, then
+  clear it in `DMA->IFCR`), not by waiting for EN to clear.
+- Full-duplex echoes overrun the RX FIFO during bursts (OVR/FRE flags
+  set) - on this SPI that is harmless: TX keeps running at wire speed.
+  The flags are drained at the flush points.
+
+## Garble fix (display off during repaint)
+
+After `LCD_Reinit()` the panel's display is ON while its GRAM still holds
+old/random content, and the slow soft-bus clear repaints progressively -
+that was the "period of garble before the banner". The demo now issues
+Display OFF (0x28) right after each `LCD_Reinit()` and Display ON (0x29)
+once the banner is fully painted (`WriteComm(0x29)` first flushes the
+queued bytes), so each pass appears as an instantly complete banner.
 
 ## Controller notes (vendor-verbatim init, from the f413 twin)
 

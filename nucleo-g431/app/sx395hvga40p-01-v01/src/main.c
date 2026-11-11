@@ -343,6 +343,8 @@ static void banner_page(const char *l1, const char *l2,
                                 (char *)l2, 2);
     }
 
+    WriteComm(0x29);                      /* flush + display on: banner complete */
+
     HAL_Delay(ms);
 
     LCD_SetAsciiFont(&ASCII_Font16);      /* stay on the 8x16 font        */
@@ -416,6 +418,7 @@ int main(void)
         Backlight_SetDuty(15U);
         LCD_Reinit();
         LCD_ResetWindow();
+        WriteComm(0x28);                  /* display off: hide repaint garble */
 
         snprintf(l2, sizeof l2, "SOFT SPI BL 15%%");
         printf("[LCD] phase: SOFT banner (%s)\r\n", l2);
@@ -430,6 +433,7 @@ int main(void)
         Backlight_SetDuty(30U);
         LCD_Reinit();
         LCD_ResetWindow();
+        WriteComm(0x28);                  /* display off: hide repaint garble */
 
         snprintf(l2, sizeof l2, "HW SPI2 42.5 MHz BL 30%%");
         printf("[LCD] phase: HARDWARE banner (%s)\r\n", l2);

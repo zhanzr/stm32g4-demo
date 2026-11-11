@@ -79,9 +79,10 @@ static void spi_hw_init(void)
     __HAL_RCC_DMA1_CLK_ENABLE();        /* SPI2_TX raster bursts */
     __HAL_RCC_DMAMUX1_CLK_ENABLE();
 
-    /* Route DMAMUX channel 1 to SPI2_TX (request 13); the DMA channel
-     * itself is fully configured per burst in dma_tx_start(). */
-    DMAMUX1_Channel1->CCR = DMA_REQUEST_SPI2_TX;
+    /* Route DMAMUX channel 0 to SPI2_TX (request 13). NOTE the 0-based
+     * DMAMUX numbering: mux channel 0 feeds DMA1_Channel1, mux channel 1
+     * feeds DMA1_Channel2, ... (DMA channels are 1-based). */
+    DMAMUX1_Channel0->CCR = DMA_REQUEST_SPI2_TX;
 
     s_hspi.Instance               = SPI2;
     s_hspi.Init.Mode              = SPI_MODE_MASTER;
@@ -140,7 +141,9 @@ static void dma_tx_start(const uint8_t *buf, uint32_t len)
     s_dma_busy = 1U;
 }
 
-/* Wait for the in-flight burst, then let the shifter drain. The RX side
+/* Wait for the in-flight burst, then let the shifter drain. On the G4 DMA
+ * the EN bit STAYS SET after the transfer completes (unlike F4 streams),
+ * so completion is polled via the channel TC flag, not via EN. The RX side
  * is left alone here: full-duplex echoes overrun (harmlessly) during a
  * burst and are cleared once per burst group by SPI_HW_Flush. */
 static void dma_tx_wait(void)
@@ -149,8 +152,10 @@ static void dma_tx_wait(void)
     {
         return;
     }
-    while ((DMA1_Channel1->CCR & DMA_CCR_EN) != 0U) { }
-    while ((SPI2->SR & SPI_SR_BSY) != 0U) { }
+    while ((DMA1->ISR & DMA_ISR_TCIF1) == 0U) { }          /* burst complete */
+    DMA1->IFCR = DMA_ISR_TCIF1;                            /* clear it */
+    DMA1_Channel1->CCR &= ~DMA_CCR_EN;                     /* disarm (EN lingers) */
+    while ((SPI2->SR & SPI_SR_BSY) != 0U) { }              /* shifter drain */
     SPI2->CR2 &= ~SPI_CR2_TXDMAEN;
     s_dma_busy = 0U;
 }
