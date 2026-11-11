@@ -6,7 +6,7 @@ board (STM32G431RBT6 @ 170 MHz) over a 4-wire SPI bus, with two
 interchangeable drive methods compared back to back in one demo loop:
 bit-banged GPIO ("soft SPI", ~700 ms per full-screen fill) and the
 **SPI2** peripheral with DMA raster bursts (**89 ms per fill** = wire
-speed at 42.5 MHz). **Verified on the connected panel.**
+speed at 42.5 MHz SCK). **Verified on the connected panel.**
 
 ## Hardware connection plan - feasibility (investigated)
 
@@ -22,10 +22,16 @@ speed at 42.5 MHz). **Verified on the connected panel.**
 Bus-level facts verified for this chip:
 
 - **SPI2 kernel clock = PCLK1 = 170 MHz fixed** (the G431 RCC has no
-  selector for it). Prescaler /4 = **42.5 MHz SCK** is the default
-  (close to the 50 MHz the nucleo-f413 twin verified on the same panel
-  family); `/2 = 85 MHz` is available as an overclock experiment via
-  `LCD_SPI2_PRESC` / `LCD_HwSetPrescaler()` - re-verify on hardware.
+  selector for it, and the SPI prescaler only steps by powers of two).
+  The HW pass therefore runs **42.5 MHz SCK** (PCLK1/4) - verified clean
+  on this panel, solid fills ~89 ms. The next divider step up is
+  **/2 = 85 MHz** (nothing in between): it was tested and *completed*
+  fine on this panel instance (fills ~45 ms), but was judged too fast to
+  keep as the default - signal-integrity margin matters more than 2x
+  fill speed here. To experiment, set
+  `LCD_HwSetPrescaler(SPI_BAUDRATEPRESCALER_2)` in the HW pass of
+  `src/main.c` (or `LCD_SPI2_PRESC` at build time) and re-check the
+  panel visually.
 - **SPI2_TX DMA**: the G4 routes DMA requests through **DMAMUX** -
   SPI2_TX is DMAMUX request **13**, driven on **DMA1 Channel 1**
   (any channel works). The nucleo-f413 version used the fixed
@@ -72,7 +78,18 @@ Display OFF (0x28) right after each `LCD_Reinit()` and Display ON (0x29)
 once the banner is fully painted (`WriteComm(0x29)` first flushes the
 queued bytes), so each pass appears as an instantly complete banner.
 
-## Controller notes (vendor-verbatim init, from the f413 twin)
+## Results (measured on hardware, 170 MHz, GCC 15.3.1, -O1)
+
+Full 320x480 solid fills (460,800 bytes each), both drive methods:
+
+| Bus | fill time | effective rate |
+| --- | --------: | -------------: |
+| HW SPI2 @ 42.5 MHz (PCLK1/4, default) | **~89 ms** | 41.4 Mbit/s wire |
+| HW SPI2 @ 85 MHz (PCLK1/2, experimental) | 45-46 ms | 80.8 Mbit/s wire |
+| soft bit-bang (pace 0) | ~700 ms | ~5.3 Mbit/s |
+
+(The 85 MHz pass completed and measured correctly, but is not the
+default - see the kernel-clock bullet above.)
 
 - **ILI9488** init: vendor-register unlock (0xF7 = A9 51 2C 82),
   power/timing (0xC0, 0xC1, 0xC5 VCOM, 0xB1 frame rate, 0xB4, 0xB6,

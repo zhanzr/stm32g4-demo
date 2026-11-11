@@ -278,7 +278,16 @@ static void info_demo(uint32_t ms, uint8_t invert)
     snprintf(linebuf[n], sizeof linebuf[n], "Freq %lu MHz", mhz);
     lines[n].text = linebuf[n];  lines[n].x = 2U;  lines[n].y = (uint16_t)y;  lines[n].scale = 2U; n++; y += dy;
 
-    snprintf(linebuf[n], sizeof linebuf[n], LCD_BusIsHw() ? "HW SPI2 42.5 MHz" : "Bus soft (bit-bang)");
+    if (LCD_BusIsHw())
+    {
+        unsigned long khz = LCD_HwSpiKHz();
+        snprintf(linebuf[n], sizeof linebuf[n], "HW SPI2 %lu.%lu MHz",
+                 khz / 1000U, (khz % 1000U) / 100U);
+    }
+    else
+    {
+        snprintf(linebuf[n], sizeof linebuf[n], "Bus soft (bit-bang)");
+    }
     lines[n].text = linebuf[n];  lines[n].x = 2U;  lines[n].y = (uint16_t)y;  lines[n].scale = 2U; n++; y += dy;
 
     snprintf(linebuf[n], sizeof linebuf[n], "SCL=PB13 SDA=PB15");
@@ -315,8 +324,8 @@ static void info_demo(uint32_t ms, uint8_t invert)
 }
 
 /* --------------------------------------------------------------------- */
-/* Big-font banner page (8x16 font), lines centered on the panel width.  */
-static void banner_page(const char *l1, const char *l2,
+/* Big-font banner page (8x16 font), three centered lines.               */
+static void banner_page(const char *l1, const char *l2, const char *l3,
                         uint32_t fg, uint32_t bg, uint32_t ms)
 {
     g_fps_color = fg;
@@ -335,12 +344,17 @@ static void banner_page(const char *l1, const char *l2,
      * Clamp to 0 for overlong lines (a negative would wrap the uint16_t
      * x and the whole line would silently vanish off-screen). */
     {
-        int tx1 = (int)LCD_W() - (int)strlen(l1) * 16;
-        int tx2 = (int)LCD_W() - (int)strlen(l2) * 16;
-        LCD_DisplayStringScaled((uint16_t)(tx1 > 0 ? tx1 / 2 : 0), 40,
-                                (char *)l1, 2);
-        LCD_DisplayStringScaled((uint16_t)(tx2 > 0 ? tx2 / 2 : 0), 90,
-                                (char *)l2, 2);
+        const char *lines[3];
+        int tx[3];
+        uint16_t y[3] = {40U, 90U, 140U};
+
+        lines[0] = l1; lines[1] = l2; lines[2] = l3;
+        for (uint32_t i = 0; i < 3U; i++)
+        {
+            tx[i] = (int)LCD_W() - (int)strlen(lines[i]) * 16;
+            LCD_DisplayStringScaled((uint16_t)(tx[i] > 0 ? tx[i] / 2 : 0),
+                                    y[i], (char *)lines[i], 2);
+        }
     }
 
     WriteComm(0x29);                      /* flush + display on: banner complete */
@@ -383,8 +397,8 @@ int main(void)
     printf("\r\n==== nucleo-g431 (STM32G431RBT6) sx395hvga40p-01-v01 @ %lu MHz ====\r\n",
            (unsigned long)(SystemCoreClock / 1000000UL));
     printf("ILI9488 3.5\" 320x480 (MADCTL 0x08), "
-           "4-wire SPI, HW SPI2 @ 42.5 MHz (PCLK1/4; /2 = 85 MHz is an "
-           "overclock knob - see README):\r\n");
+           "4-wire SPI, HW SPI2 @ 42.5 MHz (PCLK1/4; the prescaler only "
+           "steps by powers of two - the next step is 85 MHz, see README):\r\n");
     printf("SCL=PB13 SDA=PB15 DC=PB2 RST=PB1 CS=PB14 BL=PB11(PWM 15%%)\r\n");
 
     Backlight_Init();
@@ -409,6 +423,7 @@ int main(void)
      * ----------------------------------------------------------------- */
     char l1[32] = "SX395 320x480";
     char l2[40];
+    char l3[40];
 
     while (1)
     {
@@ -420,9 +435,10 @@ int main(void)
         LCD_ResetWindow();
         WriteComm(0x28);                  /* display off: hide repaint garble */
 
-        snprintf(l2, sizeof l2, "SOFT SPI BL 15%%");
-        printf("[LCD] phase: SOFT banner (%s)\r\n", l2);
-        banner_page(l1, l2, LCD_YELLOW, LCD_BLUE, 3000);
+        snprintf(l2, sizeof l2, "SOFT SPI");
+        snprintf(l3, sizeof l3, "BL 15%%");
+        printf("[LCD] phase: SOFT banner (%s / %s)\r\n", l2, l3);
+        banner_page(l1, l2, l3, LCD_YELLOW, LCD_BLUE, 3000);
 
         printf("[LCD] running patterns on SOFT SPI (320x480)\r\n");
         run_patterns();
@@ -435,9 +451,10 @@ int main(void)
         LCD_ResetWindow();
         WriteComm(0x28);                  /* display off: hide repaint garble */
 
-        snprintf(l2, sizeof l2, "HW SPI2 42.5 MHz BL 30%%");
-        printf("[LCD] phase: HARDWARE banner (%s)\r\n", l2);
-        banner_page(l1, l2, LCD_BLACK, LCD_CYAN, 3000);
+        snprintf(l2, sizeof l2, "HW SPI2 42.5 MHz");
+        snprintf(l3, sizeof l3, "BL 30%%");
+        printf("[LCD] phase: HARDWARE banner (%s / %s)\r\n", l2, l3);
+        banner_page(l1, l2, l3, LCD_BLACK, LCD_CYAN, 3000);
 
         printf("[LCD] running patterns on HARDWARE SPI2 @ 42.5 MHz (320x480)\r\n");
         run_patterns();
