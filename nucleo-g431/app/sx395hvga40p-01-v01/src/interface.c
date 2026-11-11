@@ -58,6 +58,7 @@ static uint8_t s_soft_pace = 0U;   /* volatile-loop iterations per half-bit */
 static uint8_t s_soft_slew_high = 1U;
 
 static void SendDataSPI(uint8_t dat);   /* soft bit-bang, defined below */
+static void dma_tx_wait(void);          /* TC-based burst completion wait */
 
 void CS_SET(void)
 {
@@ -118,16 +119,9 @@ static void spi_hw_enable(void)
  * so the buffer it reads is never rewritten under it. */
 static void dma_tx_start(const uint8_t *buf, uint32_t len)
 {
-    if (s_dma_busy != 0U)
-    {
-        while ((DMA1_Channel1->CCR & DMA_CCR_EN) != 0U) { }
-        while ((SPI2->SR & SPI_SR_BSY) != 0U) { }
-        s_dma_busy = 0U;
-    }
+    dma_tx_wait();               /* finish any in-flight burst first */
 
-    DMA1_Channel1->CCR &= ~DMA_CCR_EN;
-    while ((DMA1_Channel1->CCR & DMA_CCR_EN) != 0U) { }
-    DMA1->IFCR = DMA_IFCR_CTCIF1;            /* clear transfer-complete */
+    DMA1->IFCR = DMA_ISR_TCIF1;            /* clear transfer-complete */
 
     DMA1_Channel1->CPAR  = (uint32_t)&SPI2->DR;
     DMA1_Channel1->CMAR  = (uint32_t)buf;

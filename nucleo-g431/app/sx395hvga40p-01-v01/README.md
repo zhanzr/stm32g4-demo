@@ -54,7 +54,11 @@ Bus-level facts verified for this chip:
 - **The G4 DMA `CCR.EN` stays set after the transfer completes**
   (unlike F4 streams where EN auto-clears at TC). Completion must be
   polled via the channel TC flag (`DMA1->ISR & DMA_ISR_TCIF1`, then
-  clear it in `DMA->IFCR`), not by waiting for EN to clear.
+  clear it in `DMA->IFCR`), not by waiting for EN to clear. This applies
+  to *both* wait points: after arming a burst, AND before re-arming the
+  next one when double-buffering (the second miss only showed up once
+  the per-pixel buffered path of the info page ran, since the solid
+  fills never double-buffer).
 - Full-duplex echoes overrun the RX FIFO during bursts (OVR/FRE flags
   set) - on this SPI that is harmless: TX keeps running at wire speed.
   The flags are drained at the flush points.
